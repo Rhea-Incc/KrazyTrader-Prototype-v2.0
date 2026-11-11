@@ -1,4 +1,6 @@
-export type MembershipStatus = 'Pending' | 'Approved' | 'Rejected' | 'Inactive';
+export type MembershipStatus = 'Submitted' | 'Pending verification' | 'Active' | 'Rejected' | 'Inactive';
+export type VerificationStatus = 'Not started' | 'Pending' | 'Verified' | 'Needs update';
+export type VehicleCategory = 'Two-wheeler' | 'Three-wheeler';
 
 export interface Rider {
   id: string;
@@ -9,6 +11,10 @@ export interface Rider {
   town: string;
   saccoId: string;
   joinedAt: string;
+  email?: string;
+  dateOfBirth?: string;
+  occupation?: string;
+  vehicleCategory?: VehicleCategory;
 }
 
 export interface SACCO {
@@ -28,6 +34,14 @@ export interface Membership {
   status: MembershipStatus;
   createdAt: string;
   updatedAt: string;
+  applicationReference?: string;
+  submittedAt?: string;
+  verificationStatus?: VerificationStatus;
+  demoIdentityReference?: string;
+  documentPlaceholder?: string;
+  rejectionReason?: string;
+  termsAcceptedAt?: string;
+  declarationAcceptedAt?: string;
 }
 
 export interface Dealer {

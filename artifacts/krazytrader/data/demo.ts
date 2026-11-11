@@ -16,23 +16,54 @@ export const demoRider: Rider & { firstName: string } = {
   joinedAt: '2026-08-12T08:00:00.000Z',
 };
 
-export const demoSacco: SACCO = {
-  id: 'sacco-umoja',
-  name: 'Umoja Riders SACCO',
-  county: 'Nakuru',
-  town: 'Nakuru Town',
-  memberCount: 860,
-  monthlyContributionKes: 500,
-};
+export const demoSaccos: SACCO[] = [
+  {
+    id: 'sacco-umoja',
+    name: 'Umoja Riders SACCO',
+    county: 'Nakuru',
+    town: 'Nakuru Town',
+    memberCount: 860,
+    monthlyContributionKes: 500,
+  },
+  {
+    id: 'sacco-nairobi-boda',
+    name: 'Nairobi Boda Network SACCO',
+    county: 'Nairobi',
+    town: 'Eastlands',
+    memberCount: 1240,
+    monthlyContributionKes: 650,
+  },
+  {
+    id: 'sacco-coast-threewheel',
+    name: 'Coast Three-Wheeler Cooperative',
+    county: 'Mombasa',
+    town: 'Mombasa Island',
+    memberCount: 490,
+    monthlyContributionKes: 550,
+  },
+  {
+    id: 'sacco-eldoret-riders',
+    name: 'Eldoret Riders Cooperative',
+    county: 'Uasin Gishu',
+    town: 'Eldoret',
+    memberCount: 610,
+    monthlyContributionKes: 500,
+  },
+];
+
+export const demoSacco = demoSaccos[0];
 
 export const demoMembership: Membership = {
   id: 'membership-demo-001',
   riderId: demoRider.id,
   saccoId: demoSacco.id,
   memberNumber: 'KT-NAK-02481',
-  status: 'Approved',
+  status: 'Active',
   createdAt: '2026-08-12T08:00:00.000Z',
   updatedAt: '2026-08-14T10:30:00.000Z',
+  applicationReference: 'KT-APP-DEMO-02481',
+  submittedAt: '2026-08-12T08:00:00.000Z',
+  verificationStatus: 'Verified',
 };
 
 export const demoDealer: Dealer = {
@@ -142,7 +173,7 @@ export const demoBenefits: MemberBenefit[] = [
 export const demoNotifications: Notification[] = [
   {
     id: 'notice-membership',
-    title: 'Your membership is approved',
+    title: 'Your membership is active',
     body: 'Umoja Riders SACCO has confirmed your KrazyTrader member profile.',
     type: 'Membership',
     createdAt: '2026-11-09T09:30:00.000Z',

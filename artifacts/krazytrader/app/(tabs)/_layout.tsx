@@ -1,17 +1,23 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useDemoApp } from '@/context/DemoAppContext';
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { isLoading, isAuthenticated } = useDemoApp();
   const isWeb = Platform.OS === 'web';
   const tabIcon = (name: React.ComponentProps<typeof Feather>['name']) =>
     ({ focused }: { focused: boolean }) => (
       <Feather name={name} size={21} color={focused ? colors.primary : colors.mutedForeground} />
     );
+
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Redirect href="/welcome" />;
 
   return (
     <Tabs

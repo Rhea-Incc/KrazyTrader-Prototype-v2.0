@@ -6,7 +6,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,37 +17,49 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import type { DemoVehicle } from '@/data/demo';
-import type { MemberBenefit, Membership, Notification, SACCO } from '@/types/models';
+import type { MemberBenefit, Membership, Notification, Rider, SACCO } from '@/types/models';
 import { formatKes, formatShortDate } from '@/utils/format';
 import { useColors } from '@/hooks/useColors';
 
 type IconName = React.ComponentProps<typeof Feather>['name'];
 
-export function Page({ children, isTab = false }: { children: React.ReactNode; isTab?: boolean }) {
+export function Page({
+  children,
+  isTab = false,
+  safeTop = isTab,
+}: {
+  children: React.ReactNode;
+  isTab?: boolean;
+  safeTop?: boolean;
+}) {
   const colors = useColors();
   return (
     <SafeAreaView
-      edges={isTab ? ['top', 'left', 'right'] : ['left', 'right']}
+      edges={safeTop ? ['top', 'left', 'right'] : ['left', 'right']}
       style={[styles.page, { backgroundColor: colors.background }]}
     >
-      <ScrollView
+      <KeyboardAwareScrollViewCompat
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        bottomOffset={20}
         contentContainerStyle={[
           styles.pageContent,
           {
-            paddingTop: Platform.OS === 'web' && isTab ? 67 : 16,
+            paddingTop: Platform.OS === 'web' && safeTop ? 67 : 16,
             paddingBottom: isTab ? (Platform.OS === 'web' ? 118 : 105) : Platform.OS === 'web' ? 34 : 30,
           },
         ]}
       >
         {children}
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
     </SafeAreaView>
   );
 }
 
-export function BrandHeader({ onNotifications }: { onNotifications: () => void }) {
+export function BrandHeader({ onNotifications, onProfile }: { onNotifications: () => void; onProfile: () => void }) {
   const colors = useColors();
   return (
     <View style={styles.brandHeader}>
@@ -59,10 +70,15 @@ export function BrandHeader({ onNotifications }: { onNotifications: () => void }
           <Text style={[styles.brandCaption, { color: colors.mutedForeground }]}>RIDER MEMBERSHIP</Text>
         </View>
       </View>
-      <Pressable onPress={onNotifications} accessibilityRole="button" accessibilityLabel="Open notifications" style={styles.iconAction}>
-        <Feather name="bell" size={22} color={colors.foreground} />
-        <View style={[styles.notificationDot, { backgroundColor: colors.lime, borderColor: colors.background }]} />
-      </Pressable>
+      <View style={styles.headerActions}>
+        <Pressable onPress={onProfile} accessibilityRole="button" accessibilityLabel="Open profile" style={styles.iconAction}>
+          <Feather name="user" size={21} color={colors.foreground} />
+        </Pressable>
+        <Pressable onPress={onNotifications} accessibilityRole="button" accessibilityLabel="Open notifications" style={styles.iconAction}>
+          <Feather name="bell" size={21} color={colors.foreground} />
+          <View style={[styles.notificationDot, { backgroundColor: colors.lime, borderColor: colors.background }]} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -136,9 +152,10 @@ export function SectionHeader({
 export function StatusBadge({ status }: { status: string }) {
   const colors = useColors();
   const approved = status === 'Approved' || status === 'Active' || status === 'Available';
-  const pending = status === 'Pending' || status === 'Limited stock';
-  const backgroundColor = approved ? colors.successSoft : pending ? colors.warningSoft : colors.muted;
-  const color = approved ? colors.success : pending ? colors.warning : colors.mutedForeground;
+  const pending = status === 'Pending' || status === 'Submitted' || status === 'Pending verification' || status === 'Limited stock';
+  const rejected = status === 'Rejected';
+  const backgroundColor = approved ? colors.successSoft : pending || rejected ? colors.warningSoft : colors.muted;
+  const color = approved ? colors.success : rejected ? colors.destructive : pending ? colors.warning : colors.mutedForeground;
   return (
     <View style={[styles.badge, { backgroundColor }]}>
       <Text style={[styles.badgeText, { color }]}>{status}</Text>
@@ -163,8 +180,8 @@ export function SaccoCard({ sacco, membership }: { sacco: SACCO; membership: Mem
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
       <View style={styles.saccoBottom}>
         <View>
-          <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>MEMBER ID</Text>
-          <Text style={[styles.metaValue, { color: colors.foreground }]}>{membership.memberNumber}</Text>
+          <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{membership.memberNumber ? 'MEMBER ID' : 'APPLICATION REF'}</Text>
+          <Text style={[styles.metaValue, { color: colors.foreground }]}>{membership.memberNumber || membership.applicationReference || 'Pending assignment'}</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>MEMBERS</Text>
@@ -179,7 +196,9 @@ export function VehicleCard({ vehicle, onPress }: { vehicle: DemoVehicle; onPres
   const colors = useColors();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }, pressed && styles.pressed]}>
-      <Image source={vehicle.image} style={styles.vehicleImage} resizeMode="cover" />
+      <View style={[styles.vehicleImageStage, { backgroundColor: colors.card }]}>
+        <Image source={vehicle.image} style={styles.vehicleImage} resizeMode="contain" />
+      </View>
       <View style={styles.productContent}>
         <View style={styles.productHeading}>
           <Text numberOfLines={1} style={[styles.productTitle, { color: colors.foreground }]}>{vehicle.name}</Text>
@@ -262,6 +281,58 @@ export function TextField({
         {...inputProps}
       />
     </View>
+  );
+}
+
+export function KenyanPhoneField({
+  value,
+  onChangeText,
+  label = 'Mobile number',
+}: {
+  value: string;
+  onChangeText: (value: string) => void;
+  label?: string;
+}) {
+  const colors = useColors();
+  return (
+    <View style={styles.fieldWrap}>
+      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
+      <View style={[styles.phoneField, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.phonePrefix, { color: colors.primary }]}>+254</Text>
+        <View style={[styles.phoneDivider, { backgroundColor: colors.border }]} />
+        <TextInput
+          value={value}
+          onChangeText={(text) => onChangeText(text.replace(/\D/g, '').replace(/^0/, '').slice(0, 9))}
+          placeholder="700 123 456"
+          placeholderTextColor={colors.mutedForeground}
+          keyboardType="phone-pad"
+          textContentType="telephoneNumber"
+          maxLength={9}
+          style={[styles.phoneInput, { color: colors.foreground }]}
+          accessibilityLabel={`${label}, Kenya country code plus 254`}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function CheckboxRow({
+  checked,
+  onPress,
+  children,
+}: {
+  checked: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  const colors = useColors();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked }} style={styles.checkboxRow}>
+      <View style={[styles.checkbox, { borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : colors.card }]}>
+        {checked ? <Feather name="check" size={14} color={colors.primaryForeground} /> : null}
+      </View>
+      <Text style={[styles.checkboxLabel, { color: colors.foreground }]}>{children}</Text>
+    </Pressable>
   );
 }
 
@@ -430,13 +501,45 @@ export function MetaRow({ label, value }: { label: string; value: string }) {
 }
 
 export function ProductHeroImage({ source, style }: { source: ImageSourcePropType; style?: StyleProp<ImageStyle> }) {
-  return <Image source={source} resizeMode="cover" style={[styles.productHeroImage, style]} />;
+  const colors = useColors();
+  return <Image source={source} resizeMode="contain" style={[styles.productHeroImage, { backgroundColor: colors.card }, style]} />;
+}
+
+export function DigitalMembershipCard({ rider, membership, sacco }: { rider: Rider; membership: Membership; sacco: SACCO }) {
+  const colors = useColors();
+  const cardNumber = membership.status === 'Active'
+    ? membership.memberNumber || membership.applicationReference || 'Member number pending'
+    : membership.applicationReference || 'Application reference pending';
+  return (
+    <View style={[styles.digitalCard, { backgroundColor: colors.primary }]}>
+      <View style={styles.digitalTop}>
+        <View>
+          <Text style={[styles.digitalBrand, { color: colors.primaryForeground }]}>KrazyTrader</Text>
+          <Text style={[styles.digitalCaption, { color: colors.primaryForeground }]}>RIDER MEMBERSHIP</Text>
+        </View>
+        <View style={[styles.digitalChip, { backgroundColor: colors.lime }]}>
+          <Feather name="shield" size={18} color={colors.foreground} />
+        </View>
+      </View>
+      <Text style={[styles.digitalLabel, { color: colors.primaryForeground }]}>{membership.status === 'Active' ? 'MEMBER NUMBER' : 'APPLICATION REFERENCE'}</Text>
+      <Text style={[styles.digitalNumber, { color: colors.primaryForeground }]}>{cardNumber}</Text>
+      <View style={styles.digitalBottom}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.digitalName, { color: colors.primaryForeground }]}>{rider.firstName} {rider.lastName}</Text>
+          <Text style={[styles.digitalSacco, { color: colors.primaryForeground }]}>{sacco.name}</Text>
+        </View>
+        <StatusBadge status={membership.status} />
+      </View>
+      <View style={[styles.digitalAccent, { backgroundColor: colors.lime }]} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageContent: { paddingHorizontal: 20, alignSelf: 'center', width: '100%', maxWidth: 560, gap: 0 },
   brandHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   brandIdentity: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   brandLogo: { width: 40, height: 36 },
   brandName: { fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: -0.4 },
@@ -464,7 +567,8 @@ const styles = StyleSheet.create({
   metaLabel: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 0.9 },
   metaValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold', marginTop: 5 },
   productCard: { borderWidth: 1, borderRadius: 19, overflow: 'hidden', marginBottom: 4 },
-  vehicleImage: { width: '100%', height: 144 },
+  vehicleImageStage: { width: '100%', height: 164, padding: 8 },
+  vehicleImage: { width: '100%', height: '100%' },
   productContent: { padding: 13, gap: 6 },
   productHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   productTitle: { flex: 1, fontSize: 13, fontFamily: 'Inter_700Bold' },
@@ -486,6 +590,13 @@ const styles = StyleSheet.create({
   fieldWrap: { gap: 7, marginBottom: 14 },
   fieldLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   textField: { minHeight: 49, borderWidth: 1, borderRadius: 13, paddingHorizontal: 13, fontSize: 14, fontFamily: 'Inter_400Regular' },
+  phoneField: { minHeight: 49, borderWidth: 1, borderRadius: 13, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center' },
+  phonePrefix: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  phoneDivider: { width: 1, height: 23, marginHorizontal: 12 },
+  phoneInput: { flex: 1, minHeight: 46, fontSize: 14, fontFamily: 'Inter_400Regular' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8 },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  checkboxLabel: { flex: 1, fontSize: 12, lineHeight: 18, fontFamily: 'Inter_400Regular' },
   dropdown: { minHeight: 49, borderWidth: 1, borderRadius: 13, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   dropdownText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
   modalScrim: { flex: 1, justifyContent: 'center', padding: 22 },
@@ -514,4 +625,15 @@ const styles = StyleSheet.create({
   metaRowLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   metaRowValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold', textAlign: 'right', flexShrink: 1 },
   productHeroImage: { width: '100%', height: 235, borderRadius: 20 },
+  digitalCard: { minHeight: 194, borderRadius: 23, padding: 18, overflow: 'hidden', justifyContent: 'space-between', marginBottom: 4 },
+  digitalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  digitalBrand: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  digitalCaption: { fontSize: 8, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.2, opacity: 0.75, marginTop: 3 },
+  digitalChip: { width: 39, height: 39, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  digitalLabel: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 1, opacity: 0.72, marginTop: 17 },
+  digitalNumber: { fontSize: 15, fontFamily: 'Inter_700Bold', letterSpacing: 0.6, marginTop: 4 },
+  digitalBottom: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, marginTop: 17 },
+  digitalName: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  digitalSacco: { fontSize: 10, fontFamily: 'Inter_400Regular', opacity: 0.82, marginTop: 4 },
+  digitalAccent: { position: 'absolute', width: 144, height: 144, borderRadius: 72, right: -72, top: 87, opacity: 0.13 },
 });

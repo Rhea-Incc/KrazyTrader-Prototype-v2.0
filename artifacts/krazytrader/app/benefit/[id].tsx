@@ -3,12 +3,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppButton, Card, FeaturePlaceholder, Page } from '@/components/ui';
 import { demoBenefits, demoPartners } from '@/data/demo';
+import { useDemoApp } from '@/context/DemoAppContext';
 import { useColors } from '@/hooks/useColors';
 
 export default function BenefitDetailsScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { membership } = useDemoApp();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const activeMember = membership?.status === 'Active';
   const benefit = demoBenefits.find((item) => item.id === id);
   const partner = demoPartners.find((item) => item.id === benefit?.partnerId);
 
@@ -18,6 +21,18 @@ export default function BenefitDetailsScreen() {
         <FeaturePlaceholder icon="gift" description="This sample offer could not be found." nextPhase="Member benefits" />
         <View style={{ height: 18 }} />
         <AppButton label="Back to benefits" onPress={() => router.replace('/benefits')} variant="secondary" />
+      </Page>
+    );
+  }
+
+  if (!activeMember) {
+    return (
+      <Page>
+        <View style={[styles.iconBox, { backgroundColor: colors.secondary }]}><Feather name="lock" size={24} color={colors.primary} /></View>
+        <Text style={[styles.title, { color: colors.foreground }]}>Member benefit not available yet</Text>
+        <Text style={[styles.description, { color: colors.mutedForeground }]}>Only Active memberships can view member-only offers. A submitted or pending application is not active.</Text>
+        <View style={{ height: 18 }} />
+        <AppButton label="View membership status" onPress={() => router.push('/membership')} variant="secondary" />
       </Page>
     );
   }

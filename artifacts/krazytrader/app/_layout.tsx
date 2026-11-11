@@ -14,6 +14,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColors } from '@/hooks/useColors';
+import { DemoAppProvider } from '@/context/DemoAppContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -34,7 +35,10 @@ function RootLayoutNav() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ title: 'Registration' }} />
+      <Stack.Screen name="profile-edit" options={{ title: 'Edit profile' }} />
+      <Stack.Screen name="developer" options={{ title: 'Demo controls' }} />
       <Stack.Screen name="financing" options={{ title: 'Vehicle financing' }} />
       <Stack.Screen name="insurance" options={{ title: 'Insurance & assistance' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
@@ -67,7 +71,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <RootLayoutNav />
+              <DemoAppProvider>
+                <RootLayoutNav />
+              </DemoAppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>
