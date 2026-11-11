@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm --filter @workspace/krazytrader run build",
+  "outputDirectory": "artifacts/krazytrader/dist",
+  "rewrites": [
+    {
+      "source": "/qr",
+      "destination": "/qr.html"
+    }
+  ]
+}

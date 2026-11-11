@@ -1,8 +1,7 @@
-import type { ImageSourcePropType } from 'react-native';
 import type { Dealer, MemberBenefit, Membership, Notification, Partner, Rider, SACCO, Vehicle } from '@/types/models';
 
 export interface DemoVehicle extends Vehicle {
-  image: ImageSourcePropType;
+  image: number;
 }
 
 export const demoRider: Rider & { firstName: string } = {

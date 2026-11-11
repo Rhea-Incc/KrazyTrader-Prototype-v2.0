@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { demoMembership, demoRider, demoSacco } from '@/data/demo';
-import type { Membership, MembershipStatus, Rider, VehicleCategory } from '@/types/models';
+import type { FinancingApplication, Membership, MembershipStatus, Rider, VehicleCategory } from '@/types/models';
 
 const STORAGE_KEY = 'krazytrader-demo-state-v2';
 
@@ -39,6 +39,7 @@ interface StoredDemoState {
   currentPhone: string | null;
   isAuthenticated: boolean;
   registrationDraft: RegistrationDraft | null;
+  financingApplications?: FinancingApplication[];
 }
 
 export interface RegistrationSubmission {
@@ -58,6 +59,16 @@ export interface RegistrationSubmission {
   declarationAccepted: boolean;
 }
 
+export interface FinancingSubmission {
+  vehicleId: string;
+  applicantName: string;
+  phone: string;
+  requestedAmountKes: number;
+  depositKes: number;
+  termMonths: number;
+  estimatedMonthlyPaymentKes: number;
+}
+
 interface DemoAppContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -65,10 +76,12 @@ interface DemoAppContextValue {
   account: DemoAccount | null;
   rider: Rider | null;
   membership: Membership | null;
+  financingApplications: FinancingApplication[];
   registrationDraft: RegistrationDraft | null;
   storageError: string | null;
   login: (phone: string, termsAccepted: boolean) => Promise<void>;
   submitRegistration: (input: RegistrationSubmission) => Promise<string>;
+  submitFinancingApplication: (input: FinancingSubmission) => Promise<string>;
   saveRegistrationDraft: (draft: RegistrationDraft) => Promise<void>;
   updateRider: (patch: Partial<Pick<Rider, 'firstName' | 'lastName' | 'email' | 'dateOfBirth' | 'county' | 'town' | 'occupation' | 'vehicleCategory'>>) => Promise<void>;
   updatePreferences: (patch: Partial<NotificationPreferences>) => Promise<void>;
@@ -82,6 +95,7 @@ const emptyStore: StoredDemoState = {
   currentPhone: null,
   isAuthenticated: false,
   registrationDraft: null,
+  financingApplications: [],
 };
 
 const defaultPreferences: NotificationPreferences = {
@@ -133,7 +147,8 @@ function isStoredDemoState(value: unknown): value is StoredDemoState {
     typeof candidate.accounts === 'object' &&
     candidate.accounts !== null &&
     (candidate.currentPhone === null || typeof candidate.currentPhone === 'string') &&
-    typeof candidate.isAuthenticated === 'boolean'
+    typeof candidate.isAuthenticated === 'boolean' &&
+    (candidate.financingApplications === undefined || Array.isArray(candidate.financingApplications))
   );
 }
 
@@ -155,6 +170,7 @@ export function DemoAppProvider({ children }: { children: ReactNode }) {
           const loaded: StoredDemoState = {
             ...parsed,
             registrationDraft: parsed.registrationDraft ?? null,
+            financingApplications: parsed.financingApplications ?? [],
           };
           storedRef.current = loaded;
           setStored(loaded);
@@ -269,6 +285,35 @@ export function DemoAppProvider({ children }: { children: ReactNode }) {
     await save({ ...storedRef.current, registrationDraft: draft });
   };
 
+  const submitFinancingApplication = async (input: FinancingSubmission) => {
+    const previous = storedRef.current;
+    const currentRider = previous.currentPhone
+      ? previous.accounts[previous.currentPhone]?.rider
+      : null;
+    const now = new Date().toISOString();
+    const applicationReference = `KT-FIN-${Date.now().toString(36).toUpperCase()}`;
+    const application: FinancingApplication = {
+      id: createId('finance'),
+      riderId: currentRider?.id ?? createId('rider'),
+      vehicleId: input.vehicleId,
+      requestedAmountKes: input.requestedAmountKes,
+      status: 'Submitted',
+      createdAt: now,
+      updatedAt: now,
+      applicationReference,
+      applicantName: input.applicantName.trim(),
+      phone: input.phone.trim(),
+      depositKes: input.depositKes,
+      termMonths: input.termMonths,
+      estimatedMonthlyPaymentKes: input.estimatedMonthlyPaymentKes,
+    };
+    await save({
+      ...previous,
+      financingApplications: [...(previous.financingApplications ?? []), application],
+    });
+    return applicationReference;
+  };
+
   const updateRider = async (patch: Partial<Pick<Rider, 'firstName' | 'lastName' | 'email' | 'dateOfBirth' | 'county' | 'town' | 'occupation' | 'vehicleCategory'>>) => {
     const previous = storedRef.current;
     const phone = previous.currentPhone;
@@ -361,17 +406,19 @@ export function DemoAppProvider({ children }: { children: ReactNode }) {
     account,
     rider,
     membership,
+    financingApplications: stored.financingApplications ?? [],
     registrationDraft: stored.registrationDraft,
     storageError,
     login,
     submitRegistration,
+    submitFinancingApplication,
     saveRegistrationDraft,
     updateRider,
     updatePreferences,
     setMembershipStatus,
     logout,
     resetDemo,
-  }), [isLoading, stored.isAuthenticated, stored.registrationDraft, currentPhone, account, rider, membership, storageError]);
+  }), [isLoading, stored.isAuthenticated, stored.registrationDraft, stored.financingApplications, currentPhone, account, rider, membership, storageError]);
 
   return <DemoAppContext.Provider value={value}>{children}</DemoAppContext.Provider>;
 }

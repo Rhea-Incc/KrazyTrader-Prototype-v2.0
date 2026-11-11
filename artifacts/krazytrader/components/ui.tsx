@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Modal,
   Platform,
   Pressable,
@@ -10,7 +10,6 @@ import {
   Text,
   TextInput,
   View,
-  type ImageSourcePropType,
   type ImageStyle,
   type StyleProp,
   type TextInputProps,
@@ -64,7 +63,9 @@ export function BrandHeader({ onNotifications, onProfile }: { onNotifications: (
   return (
     <View style={styles.brandHeader}>
       <View style={styles.brandIdentity}>
-        <Image source={require('../assets/images/krazytrader-logo.png')} style={styles.brandLogo} resizeMode="contain" />
+        <View style={styles.brandLogoFrame}>
+          <ExpoImage source={require('../assets/images/krazytrader-logo.png')} style={styles.brandLogo} contentFit="contain" cachePolicy="memory-disk" transition={100} />
+        </View>
         <View>
           <Text style={[styles.brandName, { color: colors.foreground }]}>KrazyTrader</Text>
           <Text style={[styles.brandCaption, { color: colors.mutedForeground }]}>RIDER MEMBERSHIP</Text>
@@ -192,25 +193,34 @@ export function SaccoCard({ sacco, membership }: { sacco: SACCO; membership: Mem
   );
 }
 
-export function VehicleCard({ vehicle, onPress }: { vehicle: DemoVehicle; onPress: () => void }) {
+export function VehicleCard({ vehicle, onPress, onFinance }: { vehicle: DemoVehicle; onPress: () => void; onFinance?: () => void }) {
   const colors = useColors();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }, pressed && styles.pressed]}>
-      <View style={[styles.vehicleImageStage, { backgroundColor: colors.card }]}>
-        <Image source={vehicle.image} style={styles.vehicleImage} resizeMode="contain" />
-      </View>
-      <View style={styles.productContent}>
-        <View style={styles.productHeading}>
-          <Text numberOfLines={1} style={[styles.productTitle, { color: colors.foreground }]}>{vehicle.name}</Text>
-          <Feather name="arrow-up-right" size={17} color={colors.primary} />
+    <View style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => pressed && styles.pressed}>
+        <View style={[styles.vehicleImageStage, { backgroundColor: '#FFFFFF' }]}>
+          <ExpoImage source={vehicle.image} style={styles.vehicleImage} contentFit="contain" cachePolicy="memory-disk" transition={140} />
         </View>
-        <Text style={[styles.productCategory, { color: colors.mutedForeground }]}>{vehicle.category} · {vehicle.capacity}</Text>
-        <View style={styles.productFooter}>
-          <Text style={[styles.productPrice, { color: colors.primary }]}>{formatKes(vehicle.priceKes)}</Text>
-          <StatusBadge status={vehicle.availability} />
+        <View style={styles.productContent}>
+          <View style={styles.productHeading}>
+            <Text numberOfLines={1} style={[styles.productTitle, { color: colors.foreground }]}>{vehicle.name}</Text>
+            <Feather name="arrow-up-right" size={17} color={colors.primary} />
+          </View>
+          <Text style={[styles.productCategory, { color: colors.mutedForeground }]}>{vehicle.category} · {vehicle.capacity}</Text>
+          <View style={styles.productFooter}>
+            <Text style={[styles.productPrice, { color: colors.primary }]}>{formatKes(vehicle.priceKes)}</Text>
+            <StatusBadge status={vehicle.availability} />
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+      {onFinance ? (
+        <Pressable onPress={onFinance} accessibilityRole="button" style={[styles.financeAction, { borderTopColor: colors.border }]}>
+          <Feather name="trending-up" size={15} color={colors.primary} />
+          <Text style={[styles.financeActionText, { color: colors.primary }]}>Simulate financing</Text>
+          <Feather name="arrow-right" size={15} color={colors.primary} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -500,9 +510,9 @@ export function MetaRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function ProductHeroImage({ source, style }: { source: ImageSourcePropType; style?: StyleProp<ImageStyle> }) {
+export function ProductHeroImage({ source, style }: { source: number; style?: StyleProp<ImageStyle> }) {
   const colors = useColors();
-  return <Image source={source} resizeMode="contain" style={[styles.productHeroImage, { backgroundColor: colors.card }, style]} />;
+  return <ExpoImage source={source} contentFit="contain" cachePolicy="memory-disk" transition={140} style={[styles.productHeroImage, { backgroundColor: '#FFFFFF' }, style]} />;
 }
 
 export function DigitalMembershipCard({ rider, membership, sacco }: { rider: Rider; membership: Membership; sacco: SACCO }) {
@@ -541,7 +551,8 @@ const styles = StyleSheet.create({
   brandHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   brandIdentity: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  brandLogo: { width: 40, height: 36 },
+  brandLogoFrame: { width: 44, height: 40, borderRadius: 8, backgroundColor: '#FFFFFF', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  brandLogo: { width: 44, height: 36 },
   brandName: { fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: -0.4 },
   brandCaption: { fontSize: 8, fontFamily: 'Inter_700Bold', letterSpacing: 1.15, marginTop: 2 },
   iconAction: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', position: 'relative' },
@@ -567,7 +578,7 @@ const styles = StyleSheet.create({
   metaLabel: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 0.9 },
   metaValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold', marginTop: 5 },
   productCard: { borderWidth: 1, borderRadius: 19, overflow: 'hidden', marginBottom: 4 },
-  vehicleImageStage: { width: '100%', height: 164, padding: 8 },
+  vehicleImageStage: { width: '100%', height: 180, padding: 12 },
   vehicleImage: { width: '100%', height: '100%' },
   productContent: { padding: 13, gap: 6 },
   productHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -575,6 +586,8 @@ const styles = StyleSheet.create({
   productCategory: { fontSize: 10, fontFamily: 'Inter_400Regular' },
   productFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5 },
   productPrice: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  financeAction: { minHeight: 44, paddingHorizontal: 13, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  financeActionText: { flex: 1, fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   benefitCard: { borderWidth: 1, borderRadius: 19, padding: 15, flexDirection: 'row', gap: 12, marginBottom: 4 },
   benefitIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   benefitDetails: { flex: 1, gap: 5 },
@@ -624,7 +637,7 @@ const styles = StyleSheet.create({
   metaRow: { paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   metaRowLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   metaRowValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold', textAlign: 'right', flexShrink: 1 },
-  productHeroImage: { width: '100%', height: 235, borderRadius: 20 },
+  productHeroImage: { width: '100%', height: 255, borderRadius: 8 },
   digitalCard: { minHeight: 194, borderRadius: 23, padding: 18, overflow: 'hidden', justifyContent: 'space-between', marginBottom: 4 },
   digitalTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   digitalBrand: { fontSize: 16, fontFamily: 'Inter_700Bold' },

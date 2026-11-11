@@ -52,7 +52,7 @@ export default function VehicleDetailsScreen() {
       <View style={{ height: 16 }} />
       <AppButton label="Preview an inquiry" icon="message-circle" onPress={() => setShowNotice(true)} />
       <View style={{ height: 9 }} />
-      <AppButton label="See financing preview" icon="trending-up" onPress={() => router.push('/financing')} variant="secondary" />
+      <AppButton label="Estimate payments for this vehicle" icon="trending-up" onPress={() => router.push({ pathname: '/financing', params: { vehicleId: vehicle.id } })} variant="secondary" />
       <ConfirmDialog
         visible={showNotice}
         title="Prototype preview"

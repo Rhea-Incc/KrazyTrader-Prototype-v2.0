@@ -80,6 +80,12 @@ export interface FinancingApplication {
   status: 'Draft' | 'Submitted' | 'Under review' | 'Approved' | 'Declined';
   createdAt: string;
   updatedAt: string;
+  applicationReference?: string;
+  applicantName?: string;
+  phone?: string;
+  depositKes?: number;
+  termMonths?: number;
+  estimatedMonthlyPaymentKes?: number;
 }
 
 export interface Partner {

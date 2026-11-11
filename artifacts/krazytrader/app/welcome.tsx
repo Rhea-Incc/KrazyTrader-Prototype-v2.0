@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { AppButton, Card, CheckboxRow, KenyanPhoneField, Page, TextField } from '@/components/ui';
 import { isValidKenyanPhone, useDemoApp } from '@/context/DemoAppContext';
 import { useColors } from '@/hooks/useColors';
@@ -53,7 +54,9 @@ export default function WelcomeScreen() {
   return (
     <Page safeTop>
       <View style={styles.brand}>
-        <Image source={require('../assets/images/krazytrader-logo.png')} style={styles.logo} resizeMode="contain" />
+        <View style={styles.logoFrame}>
+          <ExpoImage source={require('../assets/images/krazytrader-logo.png')} style={styles.logo} contentFit="contain" cachePolicy="memory-disk" transition={100} />
+        </View>
         <View>
           <Text style={[styles.brandName, { color: colors.foreground }]}>KrazyTrader</Text>
           <Text style={[styles.brandCaption, { color: colors.mutedForeground }]}>RIDER MEMBERSHIP</Text>
@@ -139,6 +142,7 @@ function InlineError({ message }: { message: string }) {
 
 const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 11, marginBottom: 36 },
+  logoFrame: { width: 54, height: 48, borderRadius: 9, backgroundColor: '#FFFFFF', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   logo: { width: 54, height: 48 },
   brandName: { fontSize: 18, fontFamily: 'Inter_700Bold', letterSpacing: -0.5 },
   brandCaption: { fontSize: 8, fontFamily: 'Inter_700Bold', letterSpacing: 1.2, marginTop: 3 },

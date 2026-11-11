@@ -1,6 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, type ComponentProps } from 'react-native';
+import type { ComponentProps } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   AppButton,
   BenefitCard,
@@ -80,6 +82,19 @@ export default function HomeScreen() {
         </Card>
       )}
 
+      <SectionHeader title="Work vehicles" actionLabel="Browse fleet" onAction={() => router.push('/vehicles')} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vehicleRow}>
+        {demoVehicles.map((vehicle) => (
+          <View key={vehicle.id} style={styles.vehicleTile}>
+            <VehicleCard
+              vehicle={vehicle}
+              onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: vehicle.id } })}
+              onFinance={() => router.push({ pathname: '/financing', params: { vehicleId: vehicle.id } })}
+            />
+          </View>
+        ))}
+      </ScrollView>
+
       <SectionHeader title="Explore KrazyTrader" />
       <View style={styles.quickLinks}>
         <QuickLink label="Vehicle acquisition" icon="truck" onPress={() => router.push('/vehicles')} />
@@ -87,15 +102,6 @@ export default function HomeScreen() {
         <QuickLink label="Member benefits" icon="gift" onPress={() => router.push('/benefits')} locked={!activeMember} />
         <QuickLink label="Insurance & assistance" icon="shield" onPress={() => router.push('/insurance')} />
       </View>
-
-      <SectionHeader title="Vehicle opportunities" actionLabel="See all" onAction={() => router.push('/vehicles')} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vehicleRow}>
-        {demoVehicles.slice(0, 2).map((vehicle) => (
-          <View key={vehicle.id} style={styles.vehicleTile}>
-            <VehicleCard vehicle={vehicle} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: vehicle.id } })} />
-          </View>
-        ))}
-      </ScrollView>
 
       <SectionHeader title="Member benefits" actionLabel={activeMember ? 'Explore' : undefined} onAction={activeMember ? () => router.push('/benefits') : undefined} />
       {activeMember ? (
@@ -155,7 +161,9 @@ export default function HomeScreen() {
       </Card>
 
       <View style={styles.footer}>
-        <Image source={require('../../assets/images/krazytrader-logo.png')} style={styles.footerLogo} resizeMode="contain" />
+        <View style={styles.footerBrandStrip}>
+          <ExpoImage source={require('../../assets/images/logo.png')} style={styles.footerRheaLogo} contentFit="contain" cachePolicy="memory-disk" />
+        </View>
         <Text style={[styles.footerText, { color: colors.mutedForeground }]}>A rider-first network by Rhea Technologies</Text>
       </View>
     </Page>
@@ -224,7 +232,8 @@ const styles = StyleSheet.create({
   emptyUpdates: { paddingVertical: 0 },
   supportCard: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   supportIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  footer: { alignItems: 'center', marginTop: 24, marginBottom: 6, gap: 4 },
-  footerLogo: { height: 28, width: 54, opacity: 0.5 },
+  footer: { alignItems: 'center', marginTop: 28, marginBottom: 8, gap: 8 },
+  footerBrandStrip: { width: 180, height: 56, backgroundColor: '#050505', borderRadius: 3, alignItems: 'center', justifyContent: 'center' },
+  footerRheaLogo: { width: 164, height: 50 },
   footerText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
 });

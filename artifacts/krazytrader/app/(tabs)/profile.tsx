@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View, type ComponentProps } from 'react-native';
+import type { ComponentProps } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import {
   AppButton,
   Card,
