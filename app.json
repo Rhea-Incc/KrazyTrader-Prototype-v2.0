@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "815356e2-d865-46a8-b29c-07fca0462a0a"
+      }
+    },
+    "android": {
+      "package": "com.rheainc.workspace"
+    }
+  }
+}

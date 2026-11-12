@@ -15,15 +15,31 @@
     "ios": {
       "supportsTablet": false
     },
-    "android": {},
+    "android": {
+      "package": "com.rheatech.krazytrader",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
+    },
     "web": {
       "favicon": "./assets/images/icon.png",
       "output": "static"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b75c18b6-9a8b-4b33-8393-da7d031de908"
+      }
+    },
+    "owner": "rheatech-inc",
+    "updates": {
+      "url": "https://u.expo.dev/b75c18b6-9a8b-4b33-8393-da7d031de908"
     }
   }
 }

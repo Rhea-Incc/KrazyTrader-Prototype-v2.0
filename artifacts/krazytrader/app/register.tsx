@@ -51,6 +51,13 @@ function localPhone(phone: string | null): string {
   return digits.startsWith('254') ? digits.slice(3) : digits.startsWith('0') ? digits.slice(1) : digits;
 }
 
+function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`;
+}
+
 function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00`);
@@ -218,7 +225,15 @@ export default function RegistrationScreen() {
           <TextField label="Full name" value={form.fullName} onChangeText={(value) => updateForm('fullName', value)} placeholder="e.g. Amani Mwangi" autoCapitalize="words" returnKeyType="next" />
           <KenyanPhoneField value={form.phone} onChangeText={(value) => updateForm('phone', value)} />
           <TextField label="Email address (optional)" value={form.email} onChangeText={(value) => updateForm('email', value)} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" />
-          <TextField label="Date of birth (fictional demo date)" value={form.dateOfBirth} onChangeText={(value) => updateForm('dateOfBirth', value)} placeholder="YYYY-MM-DD" keyboardType="numbers-and-punctuation" />
+          <TextField
+            label="Date of birth (fictional demo date)"
+            value={form.dateOfBirth}
+            onChangeText={(value) => updateForm('dateOfBirth', formatDateInput(value))}
+            placeholder="YYYY-MM-DD"
+            keyboardType="numbers-and-punctuation"
+            autoCapitalize="none"
+            maxLength={10}
+          />
         </View>
       ) : null}
 

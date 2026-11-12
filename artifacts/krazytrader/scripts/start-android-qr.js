@@ -50,7 +50,7 @@ function isLocalHost(hostUri) {
 
 const expo = spawn(
   'pnpm',
-  ['exec', 'expo', 'start', '--tunnel', 'ngrok', '--port', String(expoPort)],
+  ['exec', 'expo', 'start', '--tunnel', 'ngrok', '--no-dev', '--minify', '--port', String(expoPort)],
   {
     cwd: projectRoot,
     env: process.env,
@@ -109,7 +109,16 @@ const server = http.createServer((request, response) => {
     'Cache-Control': 'no-store',
     'Content-Type': 'text/html; charset=utf-8',
   });
-  response.end(fs.readFileSync(templatePath));
+  const installUrl = process.env.EXPO_ANDROID_INSTALL_URL || '';
+  const runtimeConfig = JSON.stringify({ installUrl })
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026');
+  const html = fs.readFileSync(templatePath, 'utf8').replace(
+    '</head>',
+    `<script>window.KRAZYTRADER_QR_CONFIG=${runtimeConfig};</script>\n</head>`,
+  );
+  response.end(html);
 });
 
 function stop(signal) {

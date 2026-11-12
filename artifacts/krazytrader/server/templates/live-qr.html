@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f2f5ef" />
-    <title>KrazyTrader Android Preview</title>
+    <title>KrazyTrader Expo Go Preview</title>
     <style>
       :root {
         color-scheme: light;
@@ -63,53 +63,56 @@
         <div class="brand-mark" aria-hidden="true">KT</div>
         <div>
           <div class="brand-name">KrazyTrader</div>
-          <div class="brand-caption">ANDROID PREVIEW</div>
+          <div class="brand-caption">EXPO GO PREVIEW</div>
         </div>
         <div class="status" id="status" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          <span id="status-label">Starting Expo tunnel</span>
+          <span id="status-label">Waiting for Expo Go link</span>
         </div>
       </header>
 
       <section class="intro">
-        <div class="eyebrow">LIVE DEVELOPMENT BUILD</div>
-        <h1>Scan to open KrazyTrader in Expo Go.</h1>
-        <p>This QR is generated from the current Expo tunnel. Keep this page open while the development server is running.</p>
+        <div class="eyebrow">RIDER MEMBERSHIP · VEHICLES · BENEFITS</div>
+        <h1>Meet the KrazyTrader prototype.</h1>
+        <p>Explore the rider app on the web or Android. Scan the Expo Go code for the live mobile preview, or download the installable Android APK.</p>
       </section>
 
-      <section class="connect" aria-label="Connect an Android device">
+      <section class="connect" aria-label="KrazyTrader previews and downloads">
         <div>
-          <h2>On your Android device</h2>
+          <h2>Mobile preview with Expo Go</h2>
           <ol>
-            <li>Install and open Expo Go.</li>
-            <li>Choose <strong>Scan QR code</strong>.</li>
-            <li>Point the camera at the code on this page.</li>
+            <li>Open Expo Go on your Android phone.</li>
+            <li>Scan this QR code from Expo Go.</li>
+            <li>Keep the Expo tunnel running while you use the preview.</li>
           </ol>
-          <div class="connection" id="connection">Waiting for Expo to establish the tunnel…</div>
+          <div class="connection" id="connection">Waiting for the Expo tunnel…</div>
           <div class="link-entry">
-            <label class="link-label" for="expo-input">Expo Go connection link</label>
+            <label class="link-label" for="expo-input">Expo Go URL</label>
             <form class="link-form" id="link-form">
               <input class="link-input" id="expo-input" type="url" inputmode="url" placeholder="exp://…exp.direct" autocomplete="url" />
               <button class="action secondary" type="submit">Update QR</button>
             </form>
-            <p class="link-help">For a Vercel-hosted page, paste the live link printed by Expo or open this page with ?url= followed by the encoded link.</p>
+            <p class="link-help">On Vercel, paste the current `exp://` URL here or configure `EXPO_GO_URL`. Expo Go URLs expire when their server stops.</p>
           </div>
           <code class="url" id="expo-url"></code>
           <div class="actions">
             <a class="action disabled" id="open-app" href="#" aria-disabled="true">Open in Expo Go</a>
-            <button class="action secondary" id="copy-url" type="button" disabled>Copy link</button>
+            <a class="action secondary disabled" id="install-app" href="#" aria-disabled="true">APK download not configured</a>
+            <a class="action secondary" href="/welcome">Open web preview</a>
+            <button class="action secondary" id="copy-url" type="button" disabled>Copy Expo Go link</button>
           </div>
         </div>
         <div class="qr-wrap">
-          <div class="qr-placeholder" id="qr-placeholder">The live QR code will appear when the tunnel is ready.</div>
-          <div id="qrcode" aria-label="Live Expo Go QR code"></div>
+          <div class="qr-placeholder" id="qr-placeholder">The QR will appear when the Expo Go URL is ready.</div>
+          <div id="qrcode" aria-label="Expo Go link QR code"></div>
         </div>
       </section>
 
-      <footer>The link is temporary and changes when Expo restarts. Demo accounts and data remain local to each device.</footer>
+      <footer id="footer-note">Expo Go requires the live Expo server. The APK button downloads the installable Android preview when published; the web preview opens separately. Sample account data stays on each device.</footer>
     </main>
 
-    <script
+    <script async
+      id="qr-library"
       src="https://unpkg.com/qr-code-styling@1.6.0/lib/qr-code-styling.js"
       integrity="sha384-K7D1ZVqZVEPBKpQrjKR0/pDcFaWHQPzUBKNY5k8RRX5aGtd4WGHXEnO0qso4YowQ"
       crossorigin="anonymous"
@@ -120,16 +123,68 @@
       const connection = document.getElementById('connection');
       const urlLabel = document.getElementById('expo-url');
       const openApp = document.getElementById('open-app');
+      const installApp = document.getElementById('install-app');
       const copyUrl = document.getElementById('copy-url');
       const qrPlaceholder = document.getElementById('qr-placeholder');
       const expoInput = document.getElementById('expo-input');
       const linkForm = document.getElementById('link-form');
+      const params = new URLSearchParams(window.location.search);
+      const config = window.KRAZYTRADER_QR_CONFIG || {};
+      const qrLibrary = document.getElementById('qr-library');
       let currentUrl = '';
+      let pendingQrUrl = '';
       let qrCode = null;
       let canPollStatus = true;
 
-      if (!window.QRCodeStyling) {
-        connection.textContent = 'QR generator did not load. Use the Expo link below when it appears.';
+      function renderQr(value) {
+        if (!window.QRCodeStyling) {
+          pendingQrUrl = value;
+          qrPlaceholder.textContent = 'Loading QR renderer…';
+          return;
+        }
+        pendingQrUrl = '';
+        if (!qrCode) {
+          qrCode = new QRCodeStyling({
+            width: 280,
+            height: 280,
+            data: value,
+            dotsOptions: { color: '#172923', type: 'rounded' },
+            backgroundOptions: { color: '#ffffff' },
+            cornersSquareOptions: { color: '#17684f', type: 'extra-rounded' },
+            cornersDotOptions: { color: '#17684f', type: 'dot' },
+            qrOptions: { errorCorrectionLevel: 'H' },
+          });
+          qrCode.append(document.getElementById('qrcode'));
+        } else {
+          qrCode.update({ data: value });
+        }
+        qrPlaceholder.hidden = true;
+      }
+
+      qrLibrary.addEventListener('load', () => {
+        if (pendingQrUrl) renderQr(pendingQrUrl);
+      });
+      qrLibrary.addEventListener('error', () => {
+        qrPlaceholder.hidden = false;
+        qrPlaceholder.textContent = 'QR renderer unavailable. Copy the Expo Go URL below.';
+      });
+
+      function setApkDownload(downloadUrl) {
+        if (downloadUrl) {
+          installApp.hidden = false;
+          installApp.classList.remove('disabled');
+          installApp.setAttribute('aria-disabled', 'false');
+          installApp.textContent = 'Download Android APK';
+          installApp.href = downloadUrl;
+          installApp.target = '_blank';
+          installApp.rel = 'noopener noreferrer';
+        } else {
+          installApp.hidden = false;
+          installApp.classList.add('disabled');
+          installApp.setAttribute('aria-disabled', 'true');
+          installApp.href = '#';
+          installApp.textContent = 'APK download not configured';
+        }
       }
 
       function applyExpoUrl(value) {
@@ -142,41 +197,34 @@
           return;
         }
         const isExpoProtocol = parsedUrl.protocol === 'exp:' || parsedUrl.protocol === 'exps:';
-        const isExpoWebUrl = parsedUrl.protocol === 'https:' && (parsedUrl.hostname === 'expo.dev' || parsedUrl.hostname.endsWith('.expo.dev'));
-        if (!isExpoProtocol && !isExpoWebUrl) {
-          connection.textContent = 'Use an exp://, exps://, or expo.dev link.';
+        if (!isExpoProtocol) {
+          connection.textContent = 'Only exp:// or exps:// Expo Go links are accepted for the QR.';
           return;
         }
         if (nextUrl === currentUrl) return;
 
         currentUrl = nextUrl;
-        if (window.QRCodeStyling) {
-          if (qrCode) {
-            qrCode.update({ data: currentUrl });
-          } else {
-            qrCode = new QRCodeStyling({
-              width: 280,
-              height: 280,
-              data: currentUrl,
-              dotsOptions: { color: '#172923', type: 'rounded' },
-              backgroundOptions: { color: '#ffffff' },
-              cornersSquareOptions: { color: '#17684f', type: 'extra-rounded' },
-              cornersDotOptions: { color: '#17684f', type: 'dot' },
-              qrOptions: { errorCorrectionLevel: 'H' },
-            });
-            qrCode.append(document.getElementById('qrcode'));
-          }
-          qrPlaceholder.hidden = true;
-        }
+        renderQr(currentUrl);
         expoInput.value = currentUrl;
         urlLabel.textContent = currentUrl;
         openApp.href = currentUrl;
         openApp.classList.remove('disabled');
         openApp.setAttribute('aria-disabled', 'false');
         copyUrl.disabled = false;
-        connection.textContent = 'Ready. Scan the code with Expo Go.';
+        connection.textContent = 'Expo Go development link is ready. This link expires when its server stops.';
         status.classList.add('ready');
-        statusLabel.textContent = 'Link ready';
+        statusLabel.textContent = 'Expo Go ready';
+      }
+
+      function showHostedPage() {
+        setApkDownload(config.apkDownloadUrl || '');
+        const expoGoUrl = params.get('url') || config.expoGoUrl || '';
+        if (expoGoUrl) {
+          applyExpoUrl(expoGoUrl);
+          return;
+        }
+        statusLabel.textContent = 'Expo Go URL needed';
+        connection.textContent = 'Paste the current Expo Go exp:// URL, or set EXPO_GO_URL on Vercel.';
       }
 
       async function refreshSession() {
@@ -185,16 +233,14 @@
           const response = await fetch('/status', { cache: 'no-store' });
           if (!response.ok) {
             canPollStatus = false;
-            statusLabel.textContent = 'Expo link required';
-            connection.textContent = 'Paste the live Expo Go link to generate a QR for this deployment.';
+            showHostedPage();
             return;
           }
           const session = await response.json();
           if (session.expoUrl) applyExpoUrl(session.expoUrl);
         } catch {
           canPollStatus = false;
-          statusLabel.textContent = 'Expo link required';
-          connection.textContent = 'Paste the live Expo Go link to generate a QR for this deployment.';
+          showHostedPage();
         } finally {
           if (canPollStatus) setTimeout(refreshSession, 1500);
         }
@@ -202,6 +248,7 @@
 
       linkForm.addEventListener('submit', (event) => {
         event.preventDefault();
+        canPollStatus = false;
         applyExpoUrl(expoInput.value);
       });
 
@@ -210,16 +257,20 @@
         try {
           await navigator.clipboard.writeText(currentUrl);
           copyUrl.textContent = 'Copied';
-          setTimeout(() => { copyUrl.textContent = 'Copy link'; }, 1400);
+          setTimeout(() => { copyUrl.textContent = 'Copy Expo Go link'; }, 1400);
         } catch {
-          window.prompt('Copy the Expo Go link', currentUrl);
+          window.prompt('Copy the Expo Go exp:// link', currentUrl);
         }
       });
 
-      const configuredUrl = new URLSearchParams(window.location.search).get('url');
+      const configuredUrl = params.get('url');
+      setApkDownload(config.apkDownloadUrl || '');
       if (configuredUrl) {
         canPollStatus = false;
         applyExpoUrl(configuredUrl);
+      } else if (config.hosted) {
+        canPollStatus = false;
+        showHostedPage();
       } else {
         void refreshSession();
       }
